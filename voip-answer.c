@@ -652,11 +652,7 @@ main (int argc, const char *argv[])
          tx[1500];
 
       // This is complicated as we want to get the receive side IP address information here
-      union
-      {
-         char cmsg[CMSG_SPACE (sizeof (struct in_pktinfo))];
-         char cmsg6[CMSG_SPACE (sizeof (struct in6_pktinfo))];
-      } u;
+         char u[CMSG_SPACE (sizeof (struct in_pktinfo))];
       struct sockaddr_in6 peeraddr;
       struct iovec io = {
        iov_base:rx,
@@ -689,7 +685,7 @@ main (int argc, const char *argv[])
          {
             family = AF_INET6;
             pi6 = (void *) CMSG_DATA (cmsg);
-            addrto = &pi6->ipi6_addr;
+            addrto = &pi->ipi_addr;
             break;
          }
       if (!addrto)
@@ -743,7 +739,7 @@ main (int argc, const char *argv[])
             {
                char temp[20];
                sprintf (temp, "%u", rport);
-               sip_add_extra (&txp, txe, "tag", temp, NULL, ';', 0);
+               sip_add_extra (&txp, txe, "tag", temp, NULL, ';', 0,0);
             }
          }
          if ((p = sip_find_header (rx, rxe, "Call-ID", "i", &e, NULL)))
@@ -831,7 +827,7 @@ main (int argc, const char *argv[])
       make_reply (0);
       if (rport >= 0)
       {                         // SDP
-         char sdp[1000];
+         unsigned char sdp[1000];
          char temp[50] = "IP6 ";
          inet_ntop (family, addrto, temp + 4, sizeof (temp) - 4);
          if (family == AF_INET)
