@@ -1,2 +1,2 @@
-voip-answer.o: voip-answer.c
-	cc -fPIC -O -DLIB -c -o $@ -Iinclude $<
+voip-answer: voip-answer.c
+	cc -fPIC -O -DLIB -o $@ -Iinclude $< -lpopt
