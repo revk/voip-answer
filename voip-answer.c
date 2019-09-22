@@ -24,6 +24,7 @@
 // *            Silence
 // #            Refer to #
 
+#define	_GNU_SOURCE
 #ifdef __CHAR_UNSIGNED__
 #define ui8     char
 #else
@@ -652,7 +653,7 @@ main (int argc, const char *argv[])
          tx[1500];
 
       // This is complicated as we want to get the receive side IP address information here
-      char u[CMSG_SPACE (sizeof (struct in_pktinfo))];
+      char cmbuf[256];
       struct sockaddr_in6 peeraddr;
       struct iovec io = {
        iov_base:rx,
@@ -661,8 +662,8 @@ main (int argc, const char *argv[])
       struct msghdr mh = {
        msg_name:&peeraddr,
        msg_namelen:sizeof (peeraddr),
-       msg_control:&u,
-       msg_controllen:sizeof (u),
+       msg_control:cmbuf,
+       msg_controllen:sizeof (cmbuf),
        msg_iov:&io,
        msg_iovlen:1,
       };
@@ -671,21 +672,19 @@ main (int argc, const char *argv[])
          err (1, "recvmsg");
       void *addrto = NULL;
       struct cmsghdr *cmsg;
-      struct in_pktinfo *pi = NULL;
-      struct in6_pktinfo *pi6 = NULL;
       int family = 0;
       for (cmsg = CMSG_FIRSTHDR (&mh); cmsg != NULL; cmsg = CMSG_NXTHDR (&mh, cmsg))
          if (cmsg->cmsg_level == IPPROTO_IP && cmsg->cmsg_type == IP_PKTINFO)
          {
             family = AF_INET;
-            pi = (void *) CMSG_DATA (cmsg);
+             struct in_pktinfo *pi = (void *) CMSG_DATA (cmsg);
             addrto = &pi->ipi_spec_dst;
             break;
          } else if (cmsg->cmsg_level == IPPROTO_IPV6 && cmsg->cmsg_type == IPV6_PKTINFO)
          {
             family = AF_INET6;
-            pi6 = (void *) CMSG_DATA (cmsg);
-            addrto = &pi->ipi_addr;
+             struct in6_pktinfo *pi = (void *) CMSG_DATA (cmsg);
+            addrto = &pi->ipi6_addr;
             break;
          }
       if (!addrto)
@@ -832,7 +831,7 @@ main (int argc, const char *argv[])
          inet_ntop (family, addrto, temp + 4, sizeof (temp) - 4);
          if (family == AF_INET)
             temp[2] = '4';
-         if (!strncmp (temp + 4, "::ffff:", 7))
+	 else if (!strncmp (temp + 4, "::ffff:", 7))
          {                      // We are all IPv6 these days
             strcpy (temp + 4, temp + 4 + 7);
             temp[2] = '4';
