@@ -455,7 +455,7 @@ audio_in (int port, int s, ui8 * rx, ui8 * rxe, int nonanswer)
          }
       } else
       {
-         setenv("wavpath", outfilename, 1);
+         setenv ("wavpath", outfilename, 1);
          if (datalen)
          {                      // Recording
             if (!recscript)
@@ -744,7 +744,7 @@ main (int argc, const char *argv[])
             {
                char temp[20];
                sprintf (temp, "%u", rport);
-               sip_add_extra (&txp, txe, "tag", temp, NULL, ';', 0,0);
+               sip_add_extra (&txp, txe, "tag", temp, NULL, ';', 0, 0);
             }
          }
          if ((p = sip_find_header (rx, rxe, "Call-ID", "i", &e, NULL)))
@@ -839,6 +839,11 @@ main (int argc, const char *argv[])
          inet_ntop (family, addrto, temp + 4, sizeof (temp) - 4);
          if (family == AF_INET)
             temp[2] = '4';
+         else if (!strncmp (temp + 4, "::ffff:", 7))
+         {                      // IPv4 as IPvv6
+            strcpy (temp + 4, temp = 4 + 7);
+            temp[2] = '4';
+         }
          p = sdp;
          p += sprintf (sdp, "v=0\r\n"   //
                        "o=- %d 1 IN %s\r\n"     //
