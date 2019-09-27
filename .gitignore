@@ -1,4 +1,5 @@
 *.o
 *~
 *.swp
-voip-answer
+.DS_Store
+*/.DS_Store
