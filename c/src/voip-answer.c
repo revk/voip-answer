@@ -47,7 +47,7 @@ typedef unsigned int ui32;
 #include <popt.h>
 #include <syslog.h>
 #include "sip_parsers.h"
-#include "../deps/siptools.c"
+#include "siptools.c"
 
 int debug = 1;
 const char *savescript = NULL;  // script for saved file
@@ -841,7 +841,7 @@ main (int argc, const char *argv[])
             temp[2] = '4';
          else if (!strncmp (temp + 4, "::ffff:", 7))
          {                      // IPv4 as IPvv6
-            strcpy (temp + 4, temp = 4 + 7);
+            strcpy (temp + 4, temp + 4 + 7);
             temp[2] = '4';
          }
          p = sdp;
