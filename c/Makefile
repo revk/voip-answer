@@ -1,3 +1,9 @@
+# Create output directories
+
+DIRS=build bin
+
+$(info $(shell mkdir -p $(DIRS)))
+
 # Artifacts:
 
 bin/voip-answer: src/voip-answer.c src/siptools.c build/sip_parsers.o Makefile
