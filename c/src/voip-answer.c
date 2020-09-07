@@ -290,7 +290,11 @@ const char *audio_in(int port, int s, ui8 * rx, ui8 * rxe, int nonanswer)
             if (rp != erequest && *rp == '.')
                rp++;
             if (fn < 0)
+	    {
+               if (debug)
+                  fprintf(stderr, "%d Missing %s\n", port, infilename);
                return fn;
+	    }
             // headers
             if (lseek(fn, 12, SEEK_SET) == (off_t) - 1)
             {
