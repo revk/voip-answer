@@ -49,7 +49,8 @@ typedef unsigned int ui32;
 #include "sip_parsers.h"
 #include "siptools.c"
 
-int debug = 1;
+int debug = 0;
+int runalways = 0;
 const char *savescript = NULL;  // script for saved file
 const char *recscript = NULL;   // script for recording
 
@@ -414,7 +415,7 @@ const char *audio_in(int port, int s, ui8 * rx, ui8 * rxe, int nonanswer)
          setenv("i", temp, 1);
       }
    }
-   if (outfilename)
+   if (outfilename || runalways)
    {                            // Run script
       // Get arguments: CLI, Dialled, Email address(es)
       char *args[20];
@@ -447,7 +448,8 @@ const char *audio_in(int port, int s, ui8 * rx, ui8 * rxe, int nonanswer)
          }
       } else
       {
-         setenv("wavpath", outfilename, 1);
+         if (outfilename)
+            setenv("wavpath", outfilename, 1);
          if (datalen)
          {                      // Recording
             if (!recscript)
@@ -572,6 +574,7 @@ int main(int argc, const char *argv[])
        "hostname" },
       { "bind-port", 'p', POPT_ARGFLAG_SHOW_DEFAULT | POPT_ARG_STRING, &portname, 0, "Bind port", "port" },
       { "directory", 'd', POPT_ARG_STRING, &dir, 0, "Directory (wav files)", "path" },
+      { "run-always", 'a', POPT_ARG_NONE, &runalways, 0, "Always run rec script even if no recording", 0 },
       { "debug", 'v', POPT_ARG_NONE, &debug, 0, "Debug", 0 },
       { "dump", 'V', POPT_ARG_NONE, &dump, 0, "Dump packets", 0 },
       POPT_AUTOHELP { NULL, 0, 0, NULL, 0 }
