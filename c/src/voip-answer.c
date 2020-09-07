@@ -50,14 +50,43 @@ typedef unsigned int ui32;
 #include "siptools.c"
 
 int debug = 0;
-int runalways = 0;
 const char *savescript = NULL;  // script for saved file
 const char *recscript = NULL;   // script for recording
+const char *callscript = NULL;  // script on answer
 
 const char *audio_in(int port, int s, ui8 * rx, ui8 * rxe, int nonanswer)
 {                               // process incoming audio, then run script. Return NULL for not done, empty string for done, other string for REFER
    if (debug)
       fprintf(stderr, "%d Audio processing\n", port);
+   if (callscript)
+   {
+      // Get arguments: CLI, Dialled, Email address(es)
+      char *args[20];
+      int a = 0;
+      args[a++] = "voip-answer";
+      ui8 * e, *p = sip_find_header(rx, rxe, "From", "f", &e, NULL);
+      p = sip_find_uri(p, e, &e);
+      p = sip_find_local(p, e, &e);
+      args[a] = strndup(p, e - p);
+      setenv("from", args[a], 1);
+      a++;
+      p = sip_find_header(rx, rxe, "To", "t", &e, NULL);
+      p = sip_find_uri(p, e, &e);
+      p = sip_find_local(p, e, &e);
+      args[a] = strndup(p, e - p);
+      setenv("to", args[a], 1);
+      a++;
+      args[a] = NULL;
+      if (!fork())
+      {
+         close(s);
+         if (debug)
+            fprintf(stderr, "Script %s (%d args)\n", callscript, a);
+         execv(callscript, args);
+         err(1, "%s", callscript);
+      }
+   }
+
    char infilename[100];
    char *outfilename = NULL;
    char template[] = "/tmp/voip-answer-XXXXXX";
@@ -290,11 +319,11 @@ const char *audio_in(int port, int s, ui8 * rx, ui8 * rxe, int nonanswer)
             if (rp != erequest && *rp == '.')
                rp++;
             if (fn < 0)
-	    {
+            {
                if (debug)
                   fprintf(stderr, "%d Missing %s\n", port, infilename);
                return fn;
-	    }
+            }
             // headers
             if (lseek(fn, 12, SEEK_SET) == (off_t) - 1)
             {
@@ -419,7 +448,7 @@ const char *audio_in(int port, int s, ui8 * rx, ui8 * rxe, int nonanswer)
          setenv("i", temp, 1);
       }
    }
-   if (outfilename || runalways)
+   if (outfilename)
    {                            // Run script
       // Get arguments: CLI, Dialled, Email address(es)
       char *args[20];
@@ -572,13 +601,12 @@ int main(int argc, const char *argv[])
 
    poptContext optCon;          // context for parsing command-line options
    const struct poptOption optionsTable[] = {
+      { "call-script", 'c', POPT_ARG_STRING, &callscript, 0, "Call start script", "path" },
       { "rec-script", 'r', POPT_ARG_STRING, &recscript, 0, "Recording script", "path" },
       { "save-script", 's', POPT_ARG_STRING, &savescript, 0, "Saved file script", "path" },
-      { "bind-host", 'h', POPT_ARG_STRING, &hostname, 0, "Bind host",
-       "hostname" },
+      { "bind-host", 'h', POPT_ARG_STRING, &hostname, 0, "Bind host", "hostname" },
       { "bind-port", 'p', POPT_ARGFLAG_SHOW_DEFAULT | POPT_ARG_STRING, &portname, 0, "Bind port", "port" },
       { "directory", 'd', POPT_ARG_STRING, &dir, 0, "Directory (wav files)", "path" },
-      { "run-always", 'a', POPT_ARG_NONE, &runalways, 0, "Always run rec script even if no recording", 0 },
       { "debug", 'v', POPT_ARG_NONE, &debug, 0, "Debug", 0 },
       { "dump", 'V', POPT_ARG_NONE, &dump, 0, "Dump packets", 0 },
       POPT_AUTOHELP { NULL, 0, 0, NULL, 0 }
