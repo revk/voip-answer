@@ -54,6 +54,46 @@ const char *savescript = NULL;  // script for saved file
 const char *recscript = NULL;   // script for recording
 const char *callscript = NULL;  // script on answer
 
+int script_args(char *args[20], char *rx, char *rxe)
+{
+   int a = 0;
+   args[a++] = "voip-answer";
+   ui8 *e,
+   *p,
+   *p2,
+   *e2,
+   *v;
+   p = sip_find_header(rx, rxe, "From", "f", &e, NULL);
+   p = sip_find_uri(p, e, &e);
+   p2 = sip_find_local(p, e, &e2);
+   args[a] = strndup(p2, e2 - p2);
+   setenv("from", args[a], 1);
+   if ((p2 = sip_find_display(p, e, &e2)))
+   {
+      v = strndup(p2, e2 - p2);
+      setenv("fromname", v, 1);
+      free(v);
+   } else
+      unsetenv("fromname");
+   a++;
+   p = sip_find_header(rx, rxe, "To", "t", &e, NULL);
+   p = sip_find_uri(p, e, &e);
+   p2 = sip_find_local(p, e, &e2);
+   args[a] = strndup(p2, e2 - p2);
+   setenv("to", args[a], 1);
+   if ((p2 = sip_find_display(p, e, &e2)))
+   {
+      v = strndup(p2, e2 - p2);
+      setenv("toname", v, 1);
+      free(v);
+   } else
+      unsetenv("toname");
+   a++;
+   args[a] = NULL;
+   return a;
+}
+
+
 const char *audio_in(int port, int s, ui8 * rx, ui8 * rxe, int nonanswer)
 {                               // process incoming audio, then run script. Return NULL for not done, empty string for done, other string for REFER
    if (debug)
@@ -62,26 +102,12 @@ const char *audio_in(int port, int s, ui8 * rx, ui8 * rxe, int nonanswer)
    {
       // Get arguments: CLI, Dialled, Email address(es)
       char *args[20];
-      int a = 0;
-      args[a++] = "voip-answer";
-      ui8 * e, *p = sip_find_header(rx, rxe, "From", "f", &e, NULL);
-      p = sip_find_uri(p, e, &e);
-      p = sip_find_local(p, e, &e);
-      args[a] = strndup(p, e - p);
-      setenv("from", args[a], 1);
-      a++;
-      p = sip_find_header(rx, rxe, "To", "t", &e, NULL);
-      p = sip_find_uri(p, e, &e);
-      p = sip_find_local(p, e, &e);
-      args[a] = strndup(p, e - p);
-      setenv("to", args[a], 1);
-      a++;
-      args[a] = NULL;
+      script_args(args, rx, rxe);
       if (!fork())
       {
          close(s);
          if (debug)
-            fprintf(stderr, "Script %s (%d args)\n", callscript, a);
+            fprintf(stderr, "Script %s\n", callscript);
          execv(callscript, args);
          err(1, "%s", callscript);
       }
@@ -452,23 +478,7 @@ const char *audio_in(int port, int s, ui8 * rx, ui8 * rxe, int nonanswer)
    {                            // Run script
       // Get arguments: CLI, Dialled, Email address(es)
       char *args[20];
-      int a = 0;
-      args[a++] = "voip-answer";
-      ui8 *q,
-      *z,
-      *e,
-      *p = sip_find_header(rx, rxe, "From", "f", &e, NULL);
-      p = sip_find_uri(p, e, &e);
-      p = sip_find_local(p, e, &e);
-      args[a] = strndup(p, e - p);
-      setenv("from", args[a], 1);
-      a++;
-      p = sip_find_header(rx, rxe, "To", "t", &e, NULL);
-      p = sip_find_uri(p, e, &e);
-      p = sip_find_local(p, e, &e);
-      args[a] = strndup(p, e - p);
-      setenv("to", args[a], 1);
-      a++;
+      int a = script_args(args, rx, rxe);
       if (saved)
       {                         // Saved file
          if (!fork())
@@ -481,6 +491,10 @@ const char *audio_in(int port, int s, ui8 * rx, ui8 * rxe, int nonanswer)
          }
       } else
       {
+         ui8 *q,
+         *z,
+         *p,
+         *e;
          if (outfilename)
             setenv("wavpath", outfilename, 1);
          if (datalen)
@@ -564,7 +578,7 @@ const char *audio_in(int port, int s, ui8 * rx, ui8 * rxe, int nonanswer)
                      args[a] = strndup(q, z - q);
                      setenv("email", args[a], 1);
                      a++;
-                     args[a] = 0;
+                     args[a] = NULL;
                      if (!fork())
                      {
                         close(s);
@@ -573,8 +587,9 @@ const char *audio_in(int port, int s, ui8 * rx, ui8 * rxe, int nonanswer)
                         execv(recscript, args);
                         err(1, "%s", recscript);
                      }
-                     a -= 2;
+                     a--;
                   }
+                  a--;
                   if (z < e && *z == '>')
                      z++;
                   if (z < e && *z == ';')
