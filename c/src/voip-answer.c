@@ -64,10 +64,6 @@ int script_args(char *args[20], char *rx, char *rxe)
    *e2,
    *v;
    p = sip_find_header(rx, rxe, "From", "f", &e, NULL);
-   p = sip_find_uri(p, e, &e);
-   p2 = sip_find_local(p, e, &e2);
-   args[a] = strndup(p2, e2 - p2);
-   setenv("from", args[a], 1);
    if ((p2 = sip_find_display(p, e, &e2)))
    {
       v = strndup(p2, e2 - p2);
@@ -75,12 +71,12 @@ int script_args(char *args[20], char *rx, char *rxe)
       free(v);
    } else
       unsetenv("fromname");
-   a++;
-   p = sip_find_header(rx, rxe, "To", "t", &e, NULL);
    p = sip_find_uri(p, e, &e);
    p2 = sip_find_local(p, e, &e2);
    args[a] = strndup(p2, e2 - p2);
-   setenv("to", args[a], 1);
+   setenv("from", args[a], 1);
+   a++;
+   p = sip_find_header(rx, rxe, "To", "t", &e, NULL);
    if ((p2 = sip_find_display(p, e, &e2)))
    {
       v = strndup(p2, e2 - p2);
@@ -88,6 +84,10 @@ int script_args(char *args[20], char *rx, char *rxe)
       free(v);
    } else
       unsetenv("toname");
+   p = sip_find_uri(p, e, &e);
+   p2 = sip_find_local(p, e, &e2);
+   args[a] = strndup(p2, e2 - p2);
+   setenv("to", args[a], 1);
    a++;
    args[a] = NULL;
    return a;
