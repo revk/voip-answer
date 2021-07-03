@@ -290,13 +290,13 @@ if __name__ == '__main__':
     except BaseException:
         log.exception(
             'Failed to send recording email to: ' +
-            ','.join(config['recipient_details'][1]))
+            ','.join(config['recipient_details'][0]))
         raise
     else:
         if config['wavpath']:
             os.unlink(config['wavpath'])
         log.info(
             'Sent recording email to: ' +
-            ','.join(config['recipient_details'][1]))
+            ','.join(config['recipient_details'][0]))
         if sendmail_exit:
             sys.exit(sendmail_exit)
