@@ -1,0 +1,14 @@
+[Unit]
+Description=Call recording
+
+[Service]
+Type=simple
+User=adrian
+Group=adrian
+WorkingDirectory=/tmp
+ExecStart=/projects/github/voip-answer/c/bin/voip-answer --directory=/projects/github/voip-answer/wav --rec-script=/projects/github/voip-answer/python/voip-rec-email/voip_rec_email.py
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
