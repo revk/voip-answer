@@ -264,7 +264,7 @@ if __name__ == '__main__':
             with open(config['wavpath'], 'rb') as wav:
                 base64_audio_fh = process_audio(wav, config['format'])
                 sendmail = subprocess.Popen([
-                    '/usr/sbin/sendmail',
+                    'sendmail',
                     '-f', 'noreply@recordings.aa.net.uk',
                     '-i', '-t'], stdin=subprocess.PIPE)
                 if dtmf_header_content:
