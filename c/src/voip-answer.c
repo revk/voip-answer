@@ -644,7 +644,7 @@ int main(int argc, const char *argv[])
 
    int s = -1;                  // socket for SIP incomig
    {                            // binding
-    const struct addrinfo hints = { ai_flags: AI_PASSIVE, ai_socktype: SOCK_DGRAM, ai_family: AF_INET6, ai_protocol:IPPROTO_UDP
+    const struct addrinfo hints = { ai_flags: AI_PASSIVE|AI_V4MAPPED, ai_socktype: SOCK_DGRAM, ai_family: AF_INET6, ai_protocol:IPPROTO_UDP
       };
       struct addrinfo *a = 0,
           *t;
