@@ -649,8 +649,8 @@ int main(int argc, const char *argv[])
       struct addrinfo *a = 0,
           *t;
       int e=getaddrinfo(hostname, portname, &hints, &a);
-      if(e||!a)
-         errx(1, "Cannot look up %s (%)", portname, gai_strerror(e));
+      if(e || !a)
+         errx(1, "Cannot look up %s (%s)", portname, gai_strerror(e));
       for (t = a; t; t = t->ai_next)
       {
          int on = 1;
